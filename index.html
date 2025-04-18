@@ -1872,10 +1872,40 @@ function createCasino() {
   }, 1500);
 }
 // МАССИВ С ФУРРИ БУБАМИ И ГЛЕБАМИ СУЙ ПУТИ СЮДА!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Глобальная переменная для хранения ссылки на текущее сообщение статистики
+let currentStatsMessage = null;
+
 function showStats() {
-  const stats = JSON.parse(localStorage.getItem('rouletteStats')) || {};
-  const gifHistory = JSON.parse(localStorage.getItem('gifHistory')) || {};
-  
+  // Удаляем предыдущее сообщение статистики, если оно есть
+  if (currentStatsMessage) {
+    currentStatsMessage.remove();
+    currentStatsMessage = null;
+  }
+
+  // Загружаем статистику или создаем новую, если ее нет
+  let stats = JSON.parse(localStorage.getItem('rouletteStats'));
+  if (!stats) {
+    stats = {
+      'Синий': 0,
+      'Фиолетовый': 0,
+      'Красный': 0,
+      'Жёлтый': 0
+    };
+    localStorage.setItem('rouletteStats', JSON.stringify(stats));
+  }
+
+  // Загружаем историю гифок или создаем новую, если ее нет
+  let gifHistory = JSON.parse(localStorage.getItem('gifHistory'));
+  if (!gifHistory) {
+    gifHistory = {
+      'Синий': [],
+      'Фиолетовый': [],
+      'Красный': [],
+      'Жёлтый': []
+    };
+    localStorage.setItem('gifHistory', JSON.stringify(gifHistory));
+  }
+
   const displayedOutcomes = [
     { 
       color: '#2196F3', 
@@ -1892,7 +1922,7 @@ function showStats() {
         'img/gleb7.gif',
         'img/gleb8.gif',
         'img/gleb9.gif',
-        'img/gleb10.gif'  
+        'img/gleb10.gif'
       ] 
     },
     { 
@@ -1901,7 +1931,7 @@ function showStats() {
       name: 'Фиолетовый', 
       textColor: '#fff', 
       gifs: [
-      'img/furry1.gif',
+        'img/furry1.gif',
         'img/furry2.gif',
         'img/furry3.gif',
         'img/furry4.gif',
@@ -1918,10 +1948,10 @@ function showStats() {
       name: 'Красный', 
       textColor: '#fff', 
       gifs: [
-      'img/hand1.gif',
-      'img/hand2.gif',
-      'img/hand3.gif',
-      'img/hand4.gif'
+        'img/hand1.gif',
+        'img/hand2.gif',
+        'img/hand3.gif',
+        'img/hand4.gif'
       ] 
     },
     { 
@@ -1930,28 +1960,21 @@ function showStats() {
       name: 'Жёлтый', 
       textColor: '#333', 
       gifs: [
-      'img/buba1.gif',
-      'img/buba2.gif'
+        'img/buba1.gif',
+        'img/buba2.gif'
       ] 
     }
   ];
-
-  // Инициализация истории гифок
-  if (Object.keys(gifHistory).length === 0) {
-    for (const outcome of displayedOutcomes) {
-      gifHistory[outcome.name] = [];
-    }
-    localStorage.setItem('gifHistory', JSON.stringify(gifHistory));
-  }
 
   const statsDiv = document.createElement('div');
   statsDiv.classList.add('message', 'stats-message', 'new-message');
   
   let statsHTML = '<div class="stats-container">';
-  for (const outcome of displayedOutcomes) {
+for (const outcome of displayedOutcomes) {
     const count = stats[outcome.name] || 0;
-    const availableGifs = outcome.gifs.filter(gif => !gifHistory[outcome.name].includes(gif));
-    const showButton = count > 0 && availableGifs.length > 0;
+    
+    // Всегда показываем кнопку, если есть хотя бы 1 выпадение
+    const showButton = count > 0;
     
     statsHTML += `
       <div class="stat-item">
@@ -1960,8 +1983,9 @@ function showStats() {
         ${showButton ? `<button class="show-gif-btn" data-outcome="${outcome.name}">🎁</button>` : ''}
       </div>
     `;
-  }
-  statsHTML += '</div>';
+}
+statsHTML += '</div>';
+
   
   statsDiv.innerHTML = `
     <div class="casino-container">
@@ -1972,33 +1996,30 @@ function showStats() {
     <div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
   `;
   
+  // Сохраняем ссылку на текущее сообщение статистики
+  currentStatsMessage = statsDiv;
+  
   chatMessages.appendChild(statsDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   
   // Добавляем обработчики для кнопок показа гифок
   statsDiv.querySelectorAll('.show-gif-btn').forEach(btn => {
     btn.addEventListener('click', function() {
-      const outcomeName = this.getAttribute('data-outcome');
-      const outcome = displayedOutcomes.find(o => o.name === outcomeName);
-      const availableGifs = outcome.gifs.filter(gif => !gifHistory[outcomeName].includes(gif));
-      
-      if (availableGifs.length > 0) {
-        const randomGif = availableGifs[Math.floor(Math.random() * availableGifs.length)];
+        const outcomeName = this.getAttribute('data-outcome');
+        const outcome = displayedOutcomes.find(o => o.name === outcomeName);
+        
+        // Всегда показываем случайную гифку из доступных
+        const randomGif = outcome.gifs[Math.floor(Math.random() * outcome.gifs.length)];
         showGif(randomGif, outcomeName);
         
-        // Уменьшаем счетчик
-        stats[outcomeName]--;
+        // Уменьшаем счетчик (но не ниже 0)
+        stats[outcomeName] = Math.max(0, (stats[outcomeName] || 0) - 1);
         localStorage.setItem('rouletteStats', JSON.stringify(stats));
-        
-        // Добавляем гифку в историю
-        gifHistory[outcomeName].push(randomGif);
-        localStorage.setItem('gifHistory', JSON.stringify(gifHistory));
         
         // Обновляем статистику
         setTimeout(showStats, 1500);
-      }
     });
-  });
+});
   
   setTimeout(() => {
     statsDiv.classList.remove('new-message');
@@ -2040,6 +2061,10 @@ gifStyles.textContent = `
     align-items: center;
     gap: 5px;
     position: relative;
+    min-width: 60px;
+    padding: 10px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 10px;
   }
   .stat-color {
     width: 40px;
@@ -2054,11 +2079,13 @@ gifStyles.textContent = `
     color: white;
     padding: 2px 8px;
     border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
   }
   .show-gif-btn {
     position: absolute;
-    top: -10px;
-    right: -10px;
+    top: -5px;
+    right: -5px;
     width: 25px;
     height: 25px;
     display: flex;
@@ -2072,11 +2099,17 @@ gifStyles.textContent = `
     cursor: pointer;
     transition: all 0.2s;
     padding: 0;
-    z-index: 2;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    border: 2px solid rgba(255,255,255,0.3);
   }
   .show-gif-btn:hover {
-    background: var(--accent-hover);
-    transform: scale(1.2);
+    background: var(--accent-dark);
+    transform: scale(1.2) rotate(15deg);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+  }
+  .show-gif-btn:active {
+    transform: scale(0.95);
   }
   .reward-gif {
     max-width: 100%;
@@ -2084,14 +2117,25 @@ gifStyles.textContent = `
     border-radius: 8px;
     margin: 5px auto;
     display: block;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
   }
   .gif-info {
     font-size: 0.8em;
     text-align: center;
     margin-top: 10px;
-    color: var(--text-muted);
+    color: var(--text-color);
+    opacity: 0.7;
+  }
+
+  /* Для светлой темы */
+  .light-theme .stat-item {
+    background: rgba(0,0,0,0.05);
+  }
+  .light-theme .show-gif-btn {
+    border: 2px solid rgba(0,0,0,0.1);
   }
 `;
+
 document.head.appendChild(gifStyles);
   
 
@@ -2106,4 +2150,3 @@ document.head.appendChild(gifStyles);
     </script>
 </body>
 </html>
-
