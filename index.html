@@ -766,7 +766,7 @@ function flipCoin() {
   coinDiv.classList.add('message', 'coin-message', 'new-message');
   coinDiv.innerHTML = `
       <div>🪙 Подбрасываем монетку...</div>
-      <img src="https://1b-f.s3.eu-west-1.amazonaws.com/a/146196-A15C1B6A-D5AE-41A2-9C20-912324FA259B-0-1598508964.gif" class="coin-image" id="coin-image">
+      <img src="img/drop.gif" class="coin-image" id="coin-image">
   `;
 
   chatMessages.appendChild(coinDiv);
@@ -775,11 +775,11 @@ function flipCoin() {
   setTimeout(() => {
       const coinImage = coinDiv.querySelector('#coin-image');
       if (result === "орел") {
-          coinImage.src = "https://i.gifer.com/origin/9e/9e4e26ed07e70e4df713399668f28603_w200.gif";
+          coinImage.src = "img/orelreshka.gif";
       } else if (result === "решка") {
-          coinImage.src = "https://i.gifer.com/origin/9e/9e4e26ed07e70e4df713399668f28603_w200.gif";
+          coinImage.src = "img/orelreshka.gif";
       } else {
-          coinImage.src = "https://i.pinimg.com/originals/63/89/fa/6389fa22ed7653c40570c98b03764afc.gif";
+          coinImage.src = "img/rebro.gif";
       }
       coinImage.style.width = "80px";
 
